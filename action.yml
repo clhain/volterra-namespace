@@ -1,0 +1,32 @@
+name: 'SOME_COMPANY - Volterra Namespace'
+description: 'Interact with (create, delete) a Volterra namespace using vesctl and GitHub Actions'
+inputs:
+  name:
+    description: 'The name of the volterra namespace to add or delete.'
+    required: true
+  action:
+    description: 'The action to take on the volterra namespace (create or delete).'
+    required: true
+    default: 'create'
+  random-suffix:
+    description: 'Whether to add a random uuid suffix to the name of the namespace to be created.'
+    required: true
+    default: false
+outputs:
+  namespace-name:
+    description: "The name of the namespace."
+    value: ${{ steps.namespace-concat.outputs.final-name }}
+runs:
+  using: "composite"
+  steps:
+    - id: uuid-generator
+      run: echo "::set-output name=random-id::$(echo `uuidgen` | sed 's/-//g')"
+      if: ${{ inputs.random-suffix }}
+      shell: bash
+    - id: namespace-concat
+      run: echo "::set-output name=final-name::$(${{ inputs.random-suffix }} && echo ${{ inputs.name }}-${{ steps.uuid-generator.outputs.random-id }} | cut -c-30 || echo ${{ inputs.name }})
+      shell: bash
+    - id: expand-template
+      run: NAMESPACE_NAME=${{ steps.namespace-concat.outputs.final-name }} cat namespace.yml.tpl | envsubst > namespace.yml
+    - id: create-namespace
+      run: vesctl configuration create namespace -i namespace.yml
