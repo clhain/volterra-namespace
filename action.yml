@@ -28,5 +28,7 @@ runs:
       shell: bash
     - id: expand-template
       run: NAMESPACE_NAME=${{ steps.namespace-concat.outputs.final-name }} cat namespace.yml.tpl | envsubst > namespace.yml
+      shell: bash
     - id: create-namespace
       run: vesctl configuration create namespace -i namespace.yml
+      shell: bash
