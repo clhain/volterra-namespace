@@ -24,11 +24,11 @@ runs:
       if: ${{ inputs.random-suffix }}
       shell: bash
     - id: namespace-concat
-      run: echo "::set-output name=final-name::$(${{ inputs.random-suffix }} && echo ${{ inputs.name }}-${{ steps.uuid-generator.outputs.random-id }} | cut -c-30 || echo ${{ inputs.name }})
+      run: echo "::set-output name=final-name::$(${{ inputs.random-suffix }} && echo ${{ inputs.name }}-${{ steps.uuid-generator.outputs.random-id }} | cut -c-30 || echo ${{ inputs.name }})"
       shell: bash
     - id: expand-template
-      run: NAMESPACE_NAME=${{ steps.namespace-concat.outputs.final-name }} cat namespace.yml.tpl | envsubst > namespace.yml
+      run: NAMESPACE_NAME=${{ steps.namespace-concat.outputs.final-name }} envsubst < namespace.yml.tpl > namespace.yml
       shell: bash
     - id: create-namespace
-      run: vesctl configuration create namespace -i namespace.yml
+      run: vesctl configuration create namespace -i ${{ github.action_path }}/namespace.yml
       shell: bash
