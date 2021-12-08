@@ -20,8 +20,8 @@ runs:
   using: "composite"
   steps:
     - id: uuid-generator
+      if: ${{ github.event.inputs.random-suffix && github.event.inputs.action == 'create' }}
       run: echo "::set-output name=random-id::$(echo `uuidgen` | sed 's/-//g')"
-      if: ${{ inputs.random-suffix }}
       shell: bash
     - id: namespace-concat
       run: echo "::set-output name=final-name::$(${{ inputs.random-suffix }} && echo ${{ inputs.name }}-${{ steps.uuid-generator.outputs.random-id }} | cut -c-30 || echo ${{ inputs.name }})"
@@ -30,5 +30,10 @@ runs:
       run: NAMESPACE_NAME=${{ steps.namespace-concat.outputs.final-name }} envsubst < ${{ github.action_path }}/namespace.yml.tpl > ${{ github.action_path }}/namespace.yml
       shell: bash
     - id: create-namespace
+      if: ${{ github.event.inputs.action == 'create' }}
       run: vesctl configuration create namespace -i ${{ github.action_path }}/namespace.yml
+      shell: bash
+    - id: delete-namespace
+      if: ${{ github.event.inputs.action == 'delete' }}
+      run: vesctl request rpc namespace.CustomAPI.CascadeDelete --uri /web/namespaces/${{ steps.namespace-concat.outputs.final-name }}/cascade_delete --http-method POST -i ${{ github.action_path }}/namespace.yml
       shell: bash
