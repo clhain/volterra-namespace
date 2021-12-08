@@ -20,7 +20,6 @@ runs:
   using: "composite"
   steps:
     - id: uuid-generator
-      if: ${{ github.event.inputs.random-suffix && github.event.inputs.action == 'create' }}
       run: echo "::set-output name=random-id::$(echo `uuidgen` | sed 's/-//g')"
       shell: bash
     - id: namespace-concat
@@ -30,10 +29,20 @@ runs:
       run: NAMESPACE_NAME=${{ steps.namespace-concat.outputs.final-name }} envsubst < ${{ github.action_path }}/namespace.yml.tpl > ${{ github.action_path }}/namespace.yml
       shell: bash
     - id: create-namespace
-      if: ${{ github.event.inputs.action == 'create' }}
-      run: vesctl configuration create namespace -i ${{ github.action_path }}/namespace.yml
+      # Conditionals not supported in composite event steps yet.
+      #if: ${{ github.event.inputs.action == 'create' }}
+      run: |
+        if [[ "${{inputs.action}}" == "create" ]]; then
+          vesctl configuration create namespace -i ${{ github.action_path }}/namespace.yml
+        fi
+        exit 0
       shell: bash
     - id: delete-namespace
-      if: ${{ github.event.inputs.action == 'delete' }}
-      run: vesctl request rpc namespace.CustomAPI.CascadeDelete --uri /web/namespaces/${{ steps.namespace-concat.outputs.final-name }}/cascade_delete --http-method POST -i ${{ github.action_path }}/namespace.yml
+      # Conditionals not supported in composite event steps yet.
+      #if: ${{ github.event.inputs.action == 'delete' }}
+      run: |
+        if [[ "${{inputs.action}}" == "delete" ]]; then
+           vesctl request rpc namespace.CustomAPI.CascadeDelete --uri /web/namespaces/${{ steps.namespace-concat.outputs.final-name }}/cascade_delete --http-method POST -i ${{ github.action_path }}/namespace.yml
+        fi
+        exit 0
       shell: bash
